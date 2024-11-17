@@ -1,0 +1,35 @@
+# Etap 1: Budowanie aplikacji React
+FROM node:16 AS build
+
+# Ustawianie katalogu roboczego w kontenerze
+WORKDIR /app
+
+# Kopiowanie plików package.json i package-lock.json
+COPY package*.json ./
+
+# Instalacja zależności
+RUN npm install
+
+# Kopiowanie pozostałych plików projektu
+COPY . .
+
+# Budowanie aplikacji w trybie produkcyjnym
+RUN npm run build
+
+# Etap 2: Serwowanie aplikacji React z użyciem NGINX
+FROM nginx:alpine
+
+# Ustawianie katalogu roboczego w kontenerze
+WORKDIR /usr/share/nginx/html
+
+# Usunięcie domyślnych plików w katalogu HTML NGINX
+RUN rm -rf ./*
+
+# Kopiowanie zbudowanych plików aplikacji z etapu "build"
+COPY --from=build /app/build .
+
+# Wystawienie portu 80
+EXPOSE 80
+
+# Uruchomienie serwera NGINX
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
